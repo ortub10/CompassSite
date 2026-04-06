@@ -61,7 +61,7 @@ function calculateSatellite() {
   const elevationRad = Math.atan(
     (cosC - R_EARTH / R_SAT) / Math.sqrt(1 - cosC * cosC),
   );
-  const elevationDeg = elevationRad * (180 / Math.PI);
+  const elevationDeg = elevationRad * (180 / Math.PI); // Converts the result back from radians to degrees
 
   // Azimuth calculation
   let azimuthDeg =
