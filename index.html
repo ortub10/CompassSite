@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Mobile Compass Pro</title>
+    <style>
+      /* Base page setup - Now aligned to top */
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background-color: #1a1a1a;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start; /* Starts from top */
+        height: 100vh;
+        padding-top: 40px; /* Space from device top */
+        overflow-y: auto; /* Allow scrolling for future additions */
+        user-select: none;
+      }
+
+      /* Desktop Blocker */
+      #desktop-blocker {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 9999;
+        text-align: center;
+        padding-top: 100px;
+        box-sizing: border-box;
+      }
+
+      /* App Container */
+      .app-container {
+        text-align: center;
+        width: 100%;
+      }
+
+      /* Compass Visuals */
+      .header-label {
+        font-size: 18px;
+        letter-spacing: 4px;
+        color: #ff4757;
+        margin-bottom: 5px;
+        font-weight: bold;
+      }
+
+      .arrow-indicator {
+        font-size: 50px;
+        color: #ffffff;
+        margin-bottom: 5px;
+        display: block;
+      }
+
+      .degree-display {
+        font-size: 90px;
+        font-weight: 900;
+        margin: 0;
+        line-height: 1;
+      }
+
+      .degree-symbol {
+        font-size: 35px;
+        vertical-align: top;
+        color: #777;
+      }
+
+      /* Status Button */
+      #start-btn {
+        padding: 15px 35px;
+        font-size: 16px;
+        font-weight: bold;
+        background-color: #3498db;
+        border: none;
+        color: white;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 25px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      #start-btn.active {
+        background-color: #2ed573;
+        transform: scale(1);
+        cursor: default;
+      }
+
+      .check-mark {
+        display: none;
+        font-size: 20px;
+      }
+
+      #start-btn.active .check-mark {
+        display: inline;
+      }
+
+      /* Future modules will be placed below this point */
+      .future-content-spacer {
+        margin-top: 50px;
+        width: 80%;
+        border-top: 1px dashed #444; /* Just a visual guide for now */
+      }
+    </style>
+  </head>
+  <body>
+    <div id="desktop-blocker">
+      <h1>MOBILE ONLY</h1>
+      <p>Please open this site on your smartphone or tablet.</p>
+    </div>
+
+    <div class="app-container" id="main-content">
+      <div class="header-label">NORTH</div>
+      <div class="arrow-indicator">↑</div>
+
+      <div class="degree-display">
+        <span id="heading-val">0</span><span class="degree-symbol">°</span>
+      </div>
+
+      <button id="start-btn">
+        <span class="check-mark">✓</span>
+        <span id="btn-text">Start Compass</span>
+      </button>
+
+      <div class="future-content-spacer"></div>
+    </div>
+
+    <script>
+      const headingDisplay = document.getElementById("heading-val");
+      const startBtn = document.getElementById("start-btn");
+      const btnText = document.getElementById("btn-text");
+
+      // Check for mobile user agents
+      function enforceMobile() {
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        if (!isMobile && window.innerWidth > 1024) {
+          document.getElementById("desktop-blocker").style.display = "block";
+          document.getElementById("main-content").style.display = "none";
+        }
+      }
+
+      // Compass orientation handler
+      function handleOrientation(event) {
+        let heading = 0;
+        if (event.webkitCompassHeading) {
+          heading = event.webkitCompassHeading;
+        } else if (event.alpha !== null) {
+          heading = event.absolute ? event.alpha : 360 - event.alpha;
+        }
+        headingDisplay.innerText = Math.round(heading);
+      }
+
+      // Initialize sensors
+      async function initCompass() {
+        startBtn.classList.add("active");
+        btnText.innerText = "Compass Active";
+        startBtn.disabled = true;
+
+        if (typeof DeviceOrientationEvent.requestPermission === "function") {
+          try {
+            const permission = await DeviceOrientationEvent.requestPermission();
+            if (permission === "granted") {
+              window.addEventListener("deviceorientation", handleOrientation);
+            } else {
+              alert("Permission denied");
+              resetButton();
+            }
+          } catch (err) {
+            console.error(err);
+            resetButton();
+          }
+        } else {
+          if ("ondeviceorientationabsolute" in window) {
+            window.addEventListener(
+              "deviceorientationabsolute",
+              handleOrientation,
+              true,
+            );
+          } else {
+            window.addEventListener(
+              "deviceorientation",
+              handleOrientation,
+              true,
+            );
+          }
+        }
+      }
+
+      function resetButton() {
+        startBtn.classList.remove("active");
+        btnText.innerText = "Start Compass";
+        startBtn.disabled = false;
+      }
+
+      startBtn.addEventListener("click", initCompass);
+      window.onload = enforceMobile;
+    </script>
+  </body>
+</html>
