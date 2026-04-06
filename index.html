@@ -6,76 +6,48 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Compass & Relative Tracking</title>
+    <title>Professional Compass Tracker</title>
     <style>
       body {
         margin: 0;
         padding: 0;
         font-family: "Segoe UI", Arial, sans-serif;
-        background-color: #1a1a1a;
+        background-color: #121212;
         color: #ffffff;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start;
         height: 100vh;
         padding-top: 30px;
-        overflow-y: auto;
         user-select: none;
-      }
-
-      #desktop-blocker {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        z-index: 9999;
-        text-align: center;
-        padding-top: 100px;
-      }
-
-      .app-container {
-        text-align: center;
-        width: 100%;
-      }
-
-      .arrow-indicator {
-        font-size: 40px;
-        color: #ffffff;
-        margin-bottom: 0;
-        display: block;
+        touch-action: manipulation;
       }
 
       .degree-display {
-        font-size: 80px;
+        font-size: 85px;
         font-weight: 900;
-        margin: 0;
+        margin: 10px 0;
         line-height: 1;
+        color: #ffffff;
       }
 
       .degree-symbol {
         font-size: 30px;
-        vertical-align: top;
-        color: #777;
+        color: #555;
       }
 
-      /* The 3-Axes Row - Dynamic Tracking */
+      /* Statistics Row */
       .axes-row {
         display: flex;
         justify-content: center;
         gap: 10px;
-        margin-top: 25px;
-        background: #252525;
-        padding: 15px;
-        width: 95%;
-        max-width: 450px;
-        margin-left: auto;
-        margin-right: auto;
-        border-radius: 15px;
-        border: 1px solid #444;
+        margin-top: 20px;
+        background: #1e1e1e;
+        padding: 20px;
+        width: 90%;
+        max-width: 400px;
+        border-radius: 20px;
+        border: 1px solid #333;
       }
 
       .axis-item {
@@ -87,188 +59,157 @@
 
       .axis-label {
         font-size: 10px;
-        color: #ff4757; /* Red to show it's tracking from a point */
-        margin-bottom: 5px;
+        color: #888;
+        margin-bottom: 8px;
         font-weight: bold;
         letter-spacing: 1px;
       }
 
       .axis-value {
-        font-size: 18px;
-        font-family: monospace;
-        color: #2ed573;
+        font-size: 20px;
+        font-family: "Courier New", monospace;
+        color: #00d2ff;
+        font-weight: bold;
       }
 
       #start-btn {
-        padding: 15px 35px;
-        font-size: 16px;
+        padding: 18px 40px;
+        font-size: 18px;
         font-weight: bold;
-        background-color: #3498db;
+        background: linear-gradient(145deg, #3498db, #2980b9);
         border: none;
         color: white;
         border-radius: 50px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        margin-top: 30px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        margin-left: auto;
-        margin-right: auto;
-      }
-
-      #start-btn.active {
-        background-color: #2ed573;
-      }
-
-      .check-mark {
-        display: none;
-        font-size: 20px;
-      }
-
-      #start-btn.active .check-mark {
-        display: inline;
-      }
-
-      .future-content-spacer {
         margin-top: 40px;
-        width: 80%;
-        border-top: 1px dashed #444;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: all 0.2s ease;
+      }
+
+      #start-btn:active {
+        transform: scale(0.95);
+      }
+      #start-btn.active {
+        background: #ff4757;
+      }
+
+      #desktop-blocker {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #000;
+        z-index: 100;
+        text-align: center;
+        padding-top: 100px;
       }
     </style>
   </head>
   <body>
-    <div id="desktop-blocker">
-      <h1>MOBILE ONLY</h1>
-      <p>Please open this site on your smartphone or tablet.</p>
-    </div>
+    <div id="desktop-blocker"><h1>MOBILE ONLY</h1></div>
 
-    <div class="app-container" id="main-content">
-      <div class="arrow-indicator">↑</div>
+    <div class="app-container">
+      <div style="font-size: 40px">↑</div>
       <div class="degree-display">
         <span id="heading-val">0</span><span class="degree-symbol">°</span>
       </div>
 
       <div class="axes-row">
         <div class="axis-item">
-          <span class="axis-label">Δ ALPHA</span>
-          <span class="axis-value" id="val-alpha">0°</span>
+          <span class="axis-label">REL-A</span>
+          <span id="rel-alpha" class="axis-value">0°</span>
         </div>
         <div class="axis-item">
-          <span class="axis-label">Δ BETA</span>
-          <span class="axis-value" id="val-beta">0°</span>
+          <span class="axis-label">REL-B</span>
+          <span id="rel-beta" class="axis-value">0°</span>
         </div>
         <div class="axis-item">
-          <span class="axis-label">Δ GAMMA</span>
-          <span class="axis-value" id="val-gamma">0°</span>
+          <span class="axis-label">REL-G</span>
+          <span id="rel-gamma" class="axis-value">0°</span>
         </div>
       </div>
 
-      <button id="start-btn">
-        <span class="check-mark">✓</span>
-        <span id="btn-text">Reset to Current Position</span>
-      </button>
-
-      <div class="future-content-spacer"></div>
+      <button id="start-btn">SET REFERENCE</button>
     </div>
 
     <script>
-      const headingDisplay = document.getElementById("heading-val");
-      const alphaDisplay = document.getElementById("val-alpha");
-      const betaDisplay = document.getElementById("val-beta");
-      const gammaDisplay = document.getElementById("val-gamma");
-      const startBtn = document.getElementById("start-btn");
-      const btnText = document.getElementById("btn-text");
+      const headingDisp = document.getElementById("heading-val");
+      const aDisp = document.getElementById("rel-alpha");
+      const bDisp = document.getElementById("rel-beta");
+      const gDisp = document.getElementById("rel-gamma");
+      const btn = document.getElementById("start-btn");
 
-      // Calibration storage
-      let refAlpha = null;
-      let refBeta = null;
-      let refGamma = null;
-      let trackingActive = false;
+      let refA = null,
+        refB = null,
+        refG = null;
+      let curA = 0,
+        curB = 0,
+        curG = 0;
 
-      function handleOrientation(event) {
-        // 1. ABSOLUTE COMPASS (Always True North)
-        let currentAlpha = 0;
+      function updateDisplay(event) {
+        // הגיון מצפן אחיד
+        let alpha = event.alpha || 0;
         if (event.webkitCompassHeading) {
-          currentAlpha = event.webkitCompassHeading;
+          alpha = event.webkitCompassHeading;
+        }
+
+        curA = alpha;
+        curB = event.beta || 0;
+        curG = event.gamma || 0;
+
+        // המצפן הגדול תמיד אבסולוטי
+        headingDisp.innerText = Math.round(curA);
+
+        // חישוב יחסי רק אם נקבעה נקודת ייחוס
+        if (refA !== null) {
+          let diffA = Math.round(curA - refA);
+          if (diffA > 180) diffA -= 360;
+          if (diffA < -180) diffA += 360;
+
+          let diffB = Math.round(curB - refB);
+          let diffG = Math.round(curG - refG);
+
+          aDisp.innerText = (diffA > 0 ? "+" : "") + diffA + "°";
+          bDisp.innerText = (diffB > 0 ? "+" : "") + diffB + "°";
+          gDisp.innerText = (diffG > 0 ? "+" : "") + diffG + "°";
+        }
+      }
+
+      btn.onclick = async () => {
+        // בקשת הרשאה (iOS) או הפעלה ישירה
+        if (typeof DeviceOrientationEvent.requestPermission === "function") {
+          const p = await DeviceOrientationEvent.requestPermission();
+          if (p !== "granted") return;
+        }
+
+        // קביעת נקודת הייחוס לערכים הנוכחיים בדיוק ברגע הלחיצה
+        refA = curA;
+        refB = curB;
+        refG = curG;
+
+        btn.classList.add("active");
+        btn.innerText = "RESET REFERENCE";
+
+        // הוספת מאזינים אם עדיין לא קיימים
+        window.removeEventListener("deviceorientation", updateDisplay);
+        window.removeEventListener("deviceorientationabsolute", updateDisplay);
+
+        if ("ondeviceorientationabsolute" in window) {
+          window.addEventListener(
+            "deviceorientationabsolute",
+            updateDisplay,
+            true,
+          );
         } else {
-          currentAlpha = event.alpha || 0;
+          window.addEventListener("deviceorientation", updateDisplay, true);
         }
-
-        headingDisplay.innerText = Math.round(currentAlpha) % 360;
-
-        // 2. RELATIVE TRACKING (Delta from the point of button press)
-        if (trackingActive && refAlpha !== null) {
-          // Alpha Delta
-          let diffAlpha = Math.round(currentAlpha - refAlpha);
-          if (diffAlpha > 180) diffAlpha -= 360;
-          if (diffAlpha < -180) diffAlpha += 360;
-
-          // Beta/Gamma Delta
-          let diffBeta = Math.round((event.beta || 0) - refBeta);
-          let diffGamma = Math.round((event.gamma || 0) - refGamma);
-
-          alphaDisplay.innerText = (diffAlpha > 0 ? "+" : "") + diffAlpha + "°";
-          betaDisplay.innerText = (diffBeta > 0 ? "+" : "") + diffBeta + "°";
-          gammaDisplay.innerText = (diffGamma > 0 ? "+" : "") + diffGamma + "°";
-        }
-      }
-
-      async function initSensors() {
-        // First time press? Activate listeners
-        if (!trackingActive) {
-          if (typeof DeviceOrientationEvent.requestPermission === "function") {
-            const permission = await DeviceOrientationEvent.requestPermission();
-            if (permission === "granted") {
-              window.addEventListener("deviceorientation", handleOrientation);
-            }
-          } else {
-            window.addEventListener(
-              "deviceorientationabsolute",
-              handleOrientation,
-              true,
-            );
-            window.addEventListener(
-              "deviceorientation",
-              handleOrientation,
-              true,
-            );
-          }
-        }
-
-        // Always "Recalibrate" on click:
-        // Small timeout to ensure the sensors have a reading if it's the first click
-        setTimeout(() => {
-          const currentAlphaVal = parseFloat(headingDisplay.innerText);
-          // We use the current values as the new reference
-          refAlpha = currentAlphaVal;
-          // For Beta/Gamma we need to grab them from a temporary event or the display
-          // For simplicity, we grab the current values as the new 0
-          refBeta = lastKnownBeta;
-          refGamma = lastKnownGamma;
-
-          trackingActive = true;
-          startBtn.classList.add("active");
-          btnText.innerText = "Recalibrate Zero";
-        }, 50);
-      }
-
-      // Keep track of raw values to use as reference on click
-      let lastKnownBeta = 0;
-      let lastKnownGamma = 0;
-      window.addEventListener("deviceorientation", (e) => {
-        lastKnownBeta = e.beta || 0;
-        lastKnownGamma = e.gamma || 0;
-      });
-
-      startBtn.addEventListener("click", initSensors);
+      };
 
       window.onload = () => {
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        if (!isMobile && window.innerWidth > 1024) {
+        if (!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
           document.getElementById("desktop-blocker").style.display = "block";
-          document.getElementById("main-content").style.display = "none";
         }
       };
     </script>
