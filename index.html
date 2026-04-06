@@ -8,6 +8,7 @@
     />
     <title>Mobile Compass & Orientation</title>
     <style>
+      /* Base page setup */
       body {
         margin: 0;
         padding: 0;
@@ -35,7 +36,6 @@
         z-index: 9999;
         text-align: center;
         padding-top: 100px;
-        box-sizing: border-box;
       }
 
       .app-container {
@@ -63,6 +63,7 @@
         color: #777;
       }
 
+      /* The 3-Axes Row */
       .axes-row {
         display: flex;
         justify-content: center;
@@ -75,6 +76,7 @@
         margin-left: auto;
         margin-right: auto;
         border-radius: 15px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
       }
 
       .axis-item {
@@ -145,7 +147,6 @@
 
     <div class="app-container" id="main-content">
       <div class="arrow-indicator">↑</div>
-
       <div class="degree-display">
         <span id="heading-val">0</span><span class="degree-symbol">°</span>
       </div>
@@ -181,18 +182,21 @@
       const startBtn = document.getElementById("start-btn");
       const btnText = document.getElementById("btn-text");
 
-      function handleOrientation(event) {
-        // Compass Logic
+      // 1. PURE COMPASS LOGIC (Your original working code)
+      function handleCompass(event) {
         let heading = 0;
         if (event.webkitCompassHeading) {
           heading = event.webkitCompassHeading;
         } else {
-          heading = event.alpha || 0;
+          heading = event.alpha;
         }
-        headingDisplay.innerText = Math.round(heading) % 360;
+        const finalHeading = Math.round(heading) % 360;
+        headingDisplay.innerText = finalHeading;
+        alphaDisplay.innerText = finalHeading + "°";
+      }
 
-        // 3-Axis Values
-        alphaDisplay.innerText = Math.round(event.alpha || 0) + "°";
+      // 2. PURE ORIENTATION LOGIC (For Beta and Gamma only)
+      function handleTilt(event) {
         betaDisplay.innerText = Math.round(event.beta || 0) + "°";
         gammaDisplay.innerText = Math.round(event.gamma || 0) + "°";
       }
@@ -202,22 +206,31 @@
         btnText.innerText = "Sensors Active";
         startBtn.disabled = true;
 
+        // iOS Support
         if (typeof DeviceOrientationEvent.requestPermission === "function") {
           try {
             const permission = await DeviceOrientationEvent.requestPermission();
             if (permission === "granted") {
-              window.addEventListener("deviceorientation", handleOrientation);
+              window.addEventListener("deviceorientation", (e) => {
+                handleCompass(e);
+                handleTilt(e);
+              });
             }
           } catch (err) {
             console.error(err);
           }
-        } else {
+        }
+        // Android Support (The Split)
+        else {
+          // Compass - Using Absolute (Original working method)
           window.addEventListener(
             "deviceorientationabsolute",
-            handleOrientation,
+            handleCompass,
             true,
           );
-          window.addEventListener("deviceorientation", handleOrientation, true);
+
+          // Tilt - Using standard (For Beta/Gamma)
+          window.addEventListener("deviceorientation", handleTilt, true);
         }
       }
 
