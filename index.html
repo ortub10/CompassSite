@@ -8,7 +8,7 @@
     />
     <title>Mobile Compass Pro</title>
     <style>
-      /* Base page setup - Now aligned to top */
+      /* Base page setup - Aligned to top */
       body {
         margin: 0;
         padding: 0;
@@ -18,10 +18,10 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: flex-start; /* Starts from top */
+        justify-content: flex-start;
         height: 100vh;
-        padding-top: 40px; /* Space from device top */
-        overflow-y: auto; /* Allow scrolling for future additions */
+        padding-top: 40px;
+        overflow-y: auto;
         user-select: none;
       }
 
@@ -110,11 +110,10 @@
         display: inline;
       }
 
-      /* Future modules will be placed below this point */
       .future-content-spacer {
         margin-top: 50px;
         width: 80%;
-        border-top: 1px dashed #444; /* Just a visual guide for now */
+        border-top: 1px dashed #444;
       }
     </style>
   </head>
@@ -157,12 +156,21 @@
       // Compass orientation handler
       function handleOrientation(event) {
         let heading = 0;
+
+        // iOS Logic
         if (event.webkitCompassHeading) {
           heading = event.webkitCompassHeading;
-        } else if (event.alpha !== null) {
+        }
+        // Android/Standard Logic
+        else if (event.alpha !== null) {
           heading = event.absolute ? event.alpha : 360 - event.alpha;
         }
-        headingDisplay.innerText = Math.round(heading);
+
+        // Normalize heading to stay between 0 and 359
+        // This ensures that 360 becomes 0
+        let normalizedHeading = Math.round(heading) % 360;
+
+        headingDisplay.innerText = normalizedHeading;
       }
 
       // Initialize sensors
