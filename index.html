@@ -6,9 +6,8 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
-    <title>Mobile Compass & Orientation</title>
+    <title>Compass & Relative Tracking</title>
     <style>
-      /* Base page setup */
       body {
         margin: 0;
         padding: 0;
@@ -63,34 +62,35 @@
         color: #777;
       }
 
-      /* The 3-Axes Row */
+      /* The 3-Axes Row - Dynamic Tracking */
       .axes-row {
         display: flex;
         justify-content: center;
-        gap: 15px;
-        margin-top: 20px;
+        gap: 10px;
+        margin-top: 25px;
         background: #252525;
         padding: 15px;
-        width: 90%;
-        max-width: 400px;
+        width: 95%;
+        max-width: 450px;
         margin-left: auto;
         margin-right: auto;
         border-radius: 15px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        border: 1px solid #444;
       }
 
       .axis-item {
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-width: 80px;
+        flex: 1;
       }
 
       .axis-label {
-        font-size: 11px;
-        color: #aaa;
+        font-size: 10px;
+        color: #ff4757; /* Red to show it's tracking from a point */
         margin-bottom: 5px;
         font-weight: bold;
+        letter-spacing: 1px;
       }
 
       .axis-value {
@@ -109,7 +109,7 @@
         border-radius: 50px;
         cursor: pointer;
         transition: all 0.3s ease;
-        margin-top: 25px;
+        margin-top: 30px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -120,7 +120,6 @@
 
       #start-btn.active {
         background-color: #2ed573;
-        cursor: default;
       }
 
       .check-mark {
@@ -153,22 +152,22 @@
 
       <div class="axes-row">
         <div class="axis-item">
-          <span class="axis-label">ALPHA (α)</span>
+          <span class="axis-label">Δ ALPHA</span>
           <span class="axis-value" id="val-alpha">0°</span>
         </div>
         <div class="axis-item">
-          <span class="axis-label">BETA (β)</span>
+          <span class="axis-label">Δ BETA</span>
           <span class="axis-value" id="val-beta">0°</span>
         </div>
         <div class="axis-item">
-          <span class="axis-label">GAMMA (γ)</span>
+          <span class="axis-label">Δ GAMMA</span>
           <span class="axis-value" id="val-gamma">0°</span>
         </div>
       </div>
 
       <button id="start-btn">
         <span class="check-mark">✓</span>
-        <span id="btn-text">Start Sensors</span>
+        <span id="btn-text">Reset to Current Position</span>
       </button>
 
       <div class="future-content-spacer"></div>
@@ -182,57 +181,86 @@
       const startBtn = document.getElementById("start-btn");
       const btnText = document.getElementById("btn-text");
 
-      // 1. PURE COMPASS LOGIC (Your original working code)
-      function handleCompass(event) {
-        let heading = 0;
-        if (event.webkitCompassHeading) {
-          heading = event.webkitCompassHeading;
-        } else {
-          heading = event.alpha;
-        }
-        const finalHeading = Math.round(heading) % 360;
-        headingDisplay.innerText = finalHeading;
-        alphaDisplay.innerText = finalHeading + "°";
-      }
+      // Calibration storage
+      let refAlpha = null;
+      let refBeta = null;
+      let refGamma = null;
+      let trackingActive = false;
 
-      // 2. PURE ORIENTATION LOGIC (For Beta and Gamma only)
-      function handleTilt(event) {
-        betaDisplay.innerText = Math.round(event.beta || 0) + "°";
-        gammaDisplay.innerText = Math.round(event.gamma || 0) + "°";
+      function handleOrientation(event) {
+        // 1. ABSOLUTE COMPASS (Always True North)
+        let currentAlpha = 0;
+        if (event.webkitCompassHeading) {
+          currentAlpha = event.webkitCompassHeading;
+        } else {
+          currentAlpha = event.alpha || 0;
+        }
+
+        headingDisplay.innerText = Math.round(currentAlpha) % 360;
+
+        // 2. RELATIVE TRACKING (Delta from the point of button press)
+        if (trackingActive && refAlpha !== null) {
+          // Alpha Delta
+          let diffAlpha = Math.round(currentAlpha - refAlpha);
+          if (diffAlpha > 180) diffAlpha -= 360;
+          if (diffAlpha < -180) diffAlpha += 360;
+
+          // Beta/Gamma Delta
+          let diffBeta = Math.round((event.beta || 0) - refBeta);
+          let diffGamma = Math.round((event.gamma || 0) - refGamma);
+
+          alphaDisplay.innerText = (diffAlpha > 0 ? "+" : "") + diffAlpha + "°";
+          betaDisplay.innerText = (diffBeta > 0 ? "+" : "") + diffBeta + "°";
+          gammaDisplay.innerText = (diffGamma > 0 ? "+" : "") + diffGamma + "°";
+        }
       }
 
       async function initSensors() {
-        startBtn.classList.add("active");
-        btnText.innerText = "Sensors Active";
-        startBtn.disabled = true;
-
-        // iOS Support
-        if (typeof DeviceOrientationEvent.requestPermission === "function") {
-          try {
+        // First time press? Activate listeners
+        if (!trackingActive) {
+          if (typeof DeviceOrientationEvent.requestPermission === "function") {
             const permission = await DeviceOrientationEvent.requestPermission();
             if (permission === "granted") {
-              window.addEventListener("deviceorientation", (e) => {
-                handleCompass(e);
-                handleTilt(e);
-              });
+              window.addEventListener("deviceorientation", handleOrientation);
             }
-          } catch (err) {
-            console.error(err);
+          } else {
+            window.addEventListener(
+              "deviceorientationabsolute",
+              handleOrientation,
+              true,
+            );
+            window.addEventListener(
+              "deviceorientation",
+              handleOrientation,
+              true,
+            );
           }
         }
-        // Android Support (The Split)
-        else {
-          // Compass - Using Absolute (Original working method)
-          window.addEventListener(
-            "deviceorientationabsolute",
-            handleCompass,
-            true,
-          );
 
-          // Tilt - Using standard (For Beta/Gamma)
-          window.addEventListener("deviceorientation", handleTilt, true);
-        }
+        // Always "Recalibrate" on click:
+        // Small timeout to ensure the sensors have a reading if it's the first click
+        setTimeout(() => {
+          const currentAlphaVal = parseFloat(headingDisplay.innerText);
+          // We use the current values as the new reference
+          refAlpha = currentAlphaVal;
+          // For Beta/Gamma we need to grab them from a temporary event or the display
+          // For simplicity, we grab the current values as the new 0
+          refBeta = lastKnownBeta;
+          refGamma = lastKnownGamma;
+
+          trackingActive = true;
+          startBtn.classList.add("active");
+          btnText.innerText = "Recalibrate Zero";
+        }, 50);
       }
+
+      // Keep track of raw values to use as reference on click
+      let lastKnownBeta = 0;
+      let lastKnownGamma = 0;
+      window.addEventListener("deviceorientation", (e) => {
+        lastKnownBeta = e.beta || 0;
+        lastKnownGamma = e.gamma || 0;
+      });
 
       startBtn.addEventListener("click", initSensors);
 
