@@ -18,7 +18,7 @@
         flex-direction: column;
         align-items: center;
         justify-content: flex-start;
-        height: 100vh;
+        min-height: 100vh;
         padding-top: 30px;
         overflow-y: auto;
         user-select: none;
@@ -38,6 +38,12 @@
       .app-container {
         text-align: center;
         width: 100%;
+      }
+      .arrow-indicator {
+        font-size: 40px;
+        color: #ffffff;
+        margin-bottom: 0;
+        display: block;
       }
       .degree-display {
         font-size: 80px;
@@ -92,6 +98,7 @@
         margin: 20px auto;
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 8px;
       }
       #start-btn.active {
@@ -143,6 +150,7 @@
   <body>
     <div id="desktop-blocker"><h1>MOBILE ONLY</h1></div>
     <div class="app-container" id="main-content">
+      <div class="arrow-indicator">↑</div>
       <div class="degree-display">
         <span id="heading-val">0</span><span class="degree-symbol">°</span>
       </div>
@@ -162,19 +170,11 @@
       </div>
       <button id="start-btn"><span id="btn-text">Start Sensors</span></button>
       <div class="geo-section">
-        <input
-          type="text"
-          id="geo-input"
-          placeholder="Zip, Country (e.g. 26364, Israel)"
-        />
+        <input type="text" id="geo-input" placeholder="Search" />
         <button class="geo-btn" onclick="getCoordinates()">
           Search Location
         </button>
         <div id="coords-result" class="coords-display">Lat: -- | Lon: --</div>
-        <p class="hint">
-          Use a comma for best results:<br /><b>26364, Israel</b> or
-          <b>90210, USA</b>
-        </p>
       </div>
     </div>
 
@@ -191,23 +191,19 @@
         if (!input) return;
         coordsResult.innerText = "Searching...";
 
-        let url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(input)}`;
-
-        // אם המשתמש שם פסיק, אנחנו עוזרים ל-API להפריד בין מיקוד למדינה
-        if (input.includes(",")) {
-          const parts = input.split(",");
-          const zip = parts[0].trim();
-          const country = parts[1].trim();
-          url = `https://nominatim.openstreetmap.org/search?postalcode=${encodeURIComponent(zip)}&country=${encodeURIComponent(country)}&format=json&limit=1`;
-        }
+        // חזרנו לחיפוש חופשי (q) שהוא הכי סלחן והכי חכם
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(input)}`;
 
         try {
           const response = await fetch(url);
           const data = await response.json();
           if (data && data.length > 0) {
-            coordsResult.innerText = `Lat: ${parseFloat(data[0].lat).toFixed(4)} | Lon: ${parseFloat(data[0].lon).toFixed(4)}`;
+            // לוקחים את התוצאה הראשונה
+            const lat = parseFloat(data[0].lat).toFixed(4);
+            const lon = parseFloat(data[0].lon).toFixed(4);
+            coordsResult.innerText = `Lat: ${lat} | Lon: ${lon}`;
           } else {
-            coordsResult.innerText = "Not found. Try: Zip, Country";
+            coordsResult.innerText = "Not found. Try adding a country name.";
           }
         } catch (e) {
           coordsResult.innerText = "Error fetching data.";
@@ -216,8 +212,9 @@
 
       function handleCompass(event) {
         let h = event.webkitCompassHeading || event.alpha || 0;
-        headingDisplay.innerText = Math.round(h) % 360;
-        alphaDisplay.innerText = (Math.round(h) % 360) + "°";
+        let finalH = Math.round(h) % 360;
+        headingDisplay.innerText = finalH;
+        alphaDisplay.innerText = finalH + "°";
       }
       function handleTilt(e) {
         betaDisplay.innerText = Math.round(e.beta || 0) + "°";
